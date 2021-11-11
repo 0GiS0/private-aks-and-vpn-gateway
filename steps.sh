@@ -108,6 +108,6 @@ KUBE_API_SERVER_IP=$(az network nic list --resource-group $NODE_RESOURCE_GROUP -
 echo "$KUBE_API_SERVER_IP $PRIVATE_FQDN" >> /etc/hosts
 
 
-# Option 1: Modify /etc/hosts with the name of the private link
+# Modify /etc/hosts with the name of the private link
 sudo code /etc/hosts
 
