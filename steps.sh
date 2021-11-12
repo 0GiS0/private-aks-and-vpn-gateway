@@ -98,6 +98,8 @@ az network vnet-gateway vpn-client generate \
 --resource-group $RESOURCE_GROUP \
 --name $VPN_GATEWAY_NAME
 
+### Option 1: Use /etc/hosts to resolve private link
+
 #Get AKS private link
 PRIVATE_FQDN=$(az aks show --resource-group $RESOURCE_GROUP --name $AKS_NAME --query "privateFqdn" -o tsv)
 
@@ -107,7 +109,21 @@ KUBE_API_SERVER_IP=$(az network nic list --resource-group $NODE_RESOURCE_GROUP -
 
 echo "$KUBE_API_SERVER_IP $PRIVATE_FQDN" >> /etc/hosts
 
-
 # Modify /etc/hosts with the name of the private link
 sudo code /etc/hosts
 
+### Option 2: Use DNS Forwarder in the vnet (https://www.returngis.net/2021/11/resolver-azure-private-links-desde-una-vpn-con-dns-forwarder/)
+docker build -t 0gis0/dns-forwarder . && docker push 0gis0/dns-forwarder
+
+ACI_SUBNET_CIDR=10.10.3.0/24
+
+az container create \
+  --name dnsforwarder \
+  --resource-group $RESOURCE_GROUP \
+  --image 0gis0/dns-forwarder  \
+  --vnet $VNET_NAME \
+  --vnet-address-prefix $AKS_VNET_CIDR \
+  --subnet aci-subnet \
+  --subnet-address-prefix $ACI_SUBNET_CIDR
+
+# And add the ACI private IP to the /etc/resolv.conf
